@@ -1,88 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>웹캠 선택 및 테스트</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>웹캠 테스트</title>
   </head>
   <body>
-    <h1>웹캠 선택 및 테스트</h1>
-    <label for="cameraSelect">카메라 선택:</label>
-    <select id="cameraSelect"></select>
-    <br />
+    <h1>웹캠 테스트</h1>
     <video id="webcam" autoplay muted playsinline></video>
 
+    <button onclick="switchCamera()">카메라 전환</button>
+
     <script>
-      let webcamStream; // 현재 웹캠 스트림을 저장할 변수
+      var videoElement = document.getElementById("webcam");
+      var currentCamera = "user"; // user는 전면 카메라, environment는 후면 카메라
 
-      async function setupWebcam() {
-        const cameraSelect = document.getElementById("cameraSelect");
-        const webcam = document.getElementById("webcam");
-
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter(
-            (device) => device.kind === "videoinput"
-          );
-
-          if (videoDevices.length === 0) {
-            throw new Error("사용 가능한 비디오 입력 장치가 없습니다.");
-          }
-
-          videoDevices.forEach((device) => {
-            const option = document.createElement("option");
-            option.value = device.deviceId;
-            option.text =
-              device.label || `카메라 ${cameraSelect.options.length + 1}`;
-            cameraSelect.appendChild(option);
-          });
-
-          // 카메라 선택 변경 이벤트 리스너 추가
-          cameraSelect.addEventListener("change", async () => {
-            const selectedCamera = cameraSelect.value;
-            const constraints = {
-              video: {
-                deviceId: { exact: selectedCamera },
-              },
-            };
-
-            // 현재 웹캠 스트림을 종료
-            if (webcamStream) {
-              webcamStream.getTracks().forEach((track) => track.stop());
-            }
-
-            try {
-              const stream = await navigator.mediaDevices.getUserMedia(
-                constraints
-              );
-              webcam.srcObject = stream;
-              webcamStream = stream;
-            } catch (error) {
-              console.error("웹캠 활성화 중 오류 발생:", error);
-            }
-          });
-
-          // 초기 웹캠 설정
-          const selectedCamera = cameraSelect.value;
-          const constraints = {
-            video: {
-              deviceId: { exact: selectedCamera },
-            },
-          };
-
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia(
-              constraints
-            );
-            webcam.srcObject = stream;
-            webcamStream = stream;
-          } catch (error) {
-            console.error("웹캠 활성화 중 오류 발생:", error);
-          }
-        } catch (error) {
-          console.error("디바이스 열람 중 오류 발생:", error);
-        }
+      function switchCamera() {
+        currentCamera = currentCamera === "user" ? "environment" : "user";
+        startWebcam();
       }
 
-      window.onload = setupWebcam;
+      function startWebcam() {
+        if (videoElement.srcObject) {
+          videoElement.srcObject.getTracks().forEach((track) => track.stop());
+        }
+
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: currentCamera } })
+          .then(function (stream) {
+            videoElement.srcObject = stream;
+          })
+          .catch(function (error) {
+            console.error("웹캠을 가져오는 중 오류 발생:", error);
+          });
+      }
+
+      startWebcam();
     </script>
   </body>
 </html>
