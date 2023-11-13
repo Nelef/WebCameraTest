@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Camera Stream</title>
+  </head>
+  <body>
+    <video id="camera-stream" autoplay playsinline></video>
+
+    <script>
+      const videoElement = document.getElementById("camera-stream");
+
+      async function initCameraStream() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          videoElement.srcObject = stream;
+        } catch (error) {
+          console.error("Error accessing the camera:", error);
+        }
+      }
+
+      initCameraStream();
+    </script>
+  </body>
+</html>
