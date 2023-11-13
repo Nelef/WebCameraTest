@@ -11,6 +11,8 @@
     <video id="webcam" autoplay></video>
 
     <script>
+      let webcamStream; // 현재 웹캠 스트림을 저장할 변수
+
       async function setupWebcam() {
         const cameraSelect = document.getElementById("cameraSelect");
         const webcam = document.getElementById("webcam");
@@ -33,6 +35,28 @@
             cameraSelect.appendChild(option);
           });
 
+          // 카메라 선택 변경 이벤트 리스너 추가
+          cameraSelect.addEventListener("change", async () => {
+            const selectedCamera = cameraSelect.value;
+            const constraints = {
+              video: {
+                deviceId: { exact: selectedCamera },
+              },
+            };
+
+            // 현재 웹캠 스트림을 종료
+            if (webcamStream) {
+              webcamStream.getTracks().forEach((track) => track.stop());
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia(
+              constraints
+            );
+            webcam.srcObject = stream;
+            webcamStream = stream;
+          });
+
+          // 초기 웹캠 설정
           const selectedCamera = cameraSelect.value;
           const constraints = {
             video: {
@@ -42,6 +66,7 @@
 
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
           webcam.srcObject = stream;
+          webcamStream = stream;
         } catch (error) {
           console.error("웹캠 설정 중 오류 발생:", error);
         }
