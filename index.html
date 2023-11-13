@@ -1,54 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>웹캠 선택 및 테스트</title>
+  </head>
+  <body>
+    <h1>웹캠 선택 및 테스트</h1>
+    <label for="cameraSelect">카메라 선택:</label>
+    <select id="cameraSelect"></select>
+    <br />
+    <video id="webcam" autoplay muted playsinline></video>
 
-    <title>getUserMedia() example</title>
-    <script type="text/javascript">
-      function enableMedia() {
-        var video = document.getElementById("captureVideo");
+    <script>
+      let webcamStream; // 현재 웹캠 스트림을 저장할 변수
 
-        navigator.getUserMedia =
-          navigator.mediaDevices.getUserMedia ||
-          navigator.getUserMedia ||
-          navigator.webkitGetUserMedia ||
-          navigator.mozGetUserMedia ||
-          navigator.msGetUserMedia;
+      async function setupWebcam() {
+        const cameraSelect = document.getElementById("cameraSelect");
+        const webcam = document.getElementById("webcam");
 
-        if (navigator.getUserMedia) {
-          navigator.mediaDevices
-            .getUserMedia({
-              audio: false,
-              video: { facingMode: "environment" },
-            })
-            .then(function (stream) {
-              video.srcObject = stream;
-              video.onloadedmetadata = function (e) {
-                video.play();
-              };
-            })
-            .catch(function (e) {
-              console.log("error: " + e);
-            });
-        } else {
-          console.log("getUserMedia() not available.");
-          video.src = "somevideo.webm"; // fallback.
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(
+            (device) => device.kind === "videoinput"
+          );
+
+          if (videoDevices.length === 0) {
+            throw new Error("사용 가능한 비디오 입력 장치가 없습니다.");
+          }
+
+          videoDevices.forEach((device) => {
+            const option = document.createElement("option");
+            option.value = device.deviceId;
+            option.text =
+              device.label || `카메라 ${cameraSelect.options.length + 1}`;
+            cameraSelect.appendChild(option);
+          });
+
+          // 카메라 선택 변경 이벤트 리스너 추가
+          cameraSelect.addEventListener("change", async () => {
+            const selectedCamera = cameraSelect.value;
+            const constraints = {
+              video: {
+                deviceId: { exact: selectedCamera },
+              },
+            };
+
+            // 현재 웹캠 스트림을 종료
+            if (webcamStream) {
+              webcamStream.getTracks().forEach((track) => track.stop());
+            }
+
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia(
+                constraints
+              );
+              webcam.srcObject = stream;
+              webcamStream = stream;
+            } catch (error) {
+              console.error("웹캠 활성화 중 오류 발생:", error);
+            }
+          });
+
+          // 초기 웹캠 설정
+          const selectedCamera = cameraSelect.value;
+          const constraints = {
+            video: {
+              deviceId: { exact: selectedCamera },
+            },
+          };
+
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia(
+              constraints
+            );
+            webcam.srcObject = stream;
+            webcamStream = stream;
+          } catch (error) {
+            console.error("웹캠 활성화 중 오류 발생:", error);
+          }
+        } catch (error) {
+          console.error("디바이스 열람 중 오류 발생:", error);
         }
       }
 
-      $(document).ready(enableMedia);
+      window.onload = setupWebcam;
     </script>
-  </head>
-  <body>
-    <h2>capture example</h2>
-    <video
-      id="captureVideo"
-      controls
-      autoplay
-      muted
-      playsinline
-      style="width: 100%; height: 100%; border: 1px solid black"
-    ></video>
   </body>
 </html>
