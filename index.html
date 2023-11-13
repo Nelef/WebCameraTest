@@ -49,11 +49,15 @@
               webcamStream.getTracks().forEach((track) => track.stop());
             }
 
-            const stream = await navigator.mediaDevices.getUserMedia(
-              constraints
-            );
-            webcam.srcObject = stream;
-            webcamStream = stream;
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia(
+                constraints
+              );
+              webcam.srcObject = stream;
+              webcamStream = stream;
+            } catch (error) {
+              console.error("웹캠 활성화 중 오류 발생:", error);
+            }
           });
 
           // 초기 웹캠 설정
@@ -64,11 +68,17 @@
             },
           };
 
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          webcam.srcObject = stream;
-          webcamStream = stream;
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia(
+              constraints
+            );
+            webcam.srcObject = stream;
+            webcamStream = stream;
+          } catch (error) {
+            console.error("웹캠 활성화 중 오류 발생:", error);
+          }
         } catch (error) {
-          console.error("웹캠 설정 중 오류 발생:", error);
+          console.error("디바이스 열람 중 오류 발생:", error);
         }
       }
 
