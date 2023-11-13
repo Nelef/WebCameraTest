@@ -1,26 +1,53 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Camera Stream</title>
+    <title>웹캠 선택 및 테스트</title>
   </head>
   <body>
-    <video id="camera-stream" autoplay playsinline></video>
+    <h1>웹캠 선택 및 테스트</h1>
+    <label for="cameraSelect">카메라 선택:</label>
+    <select id="cameraSelect"></select>
+    <br />
+    <video id="webcam" autoplay></video>
 
     <script>
-      const videoElement = document.getElementById("camera-stream");
+      async function setupWebcam() {
+        const cameraSelect = document.getElementById("cameraSelect");
+        const webcam = document.getElementById("webcam");
 
-      async function initCameraStream() {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(
+            (device) => device.kind === "videoinput"
+          );
+
+          if (videoDevices.length === 0) {
+            throw new Error("사용 가능한 비디오 입력 장치가 없습니다.");
+          }
+
+          videoDevices.forEach((device) => {
+            const option = document.createElement("option");
+            option.value = device.deviceId;
+            option.text =
+              device.label || `카메라 ${cameraSelect.options.length + 1}`;
+            cameraSelect.appendChild(option);
           });
-          videoElement.srcObject = stream;
+
+          const selectedCamera = cameraSelect.value;
+          const constraints = {
+            video: {
+              deviceId: { exact: selectedCamera },
+            },
+          };
+
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          webcam.srcObject = stream;
         } catch (error) {
-          console.error("Error accessing the camera:", error);
+          console.error("웹캠 설정 중 오류 발생:", error);
         }
       }
 
-      initCameraStream();
+      window.onload = setupWebcam;
     </script>
   </body>
 </html>
